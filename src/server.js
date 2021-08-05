@@ -1,8 +1,9 @@
 import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc.js"
 import Fastify from "fastify"
-import fetch from "node-fetch"
-import StatusCodes from "http-status-codes"
+import fs from "fs/promises"
+// import fetch from "node-fetch"
+// import StatusCodes from "http-status-codes"
 
 dayjs.extend(utc)
 
@@ -12,20 +13,24 @@ const fastify = Fastify({
 
 fastify.register(import("fastify-cors"))
 
-let interventions = []
+let interventions = [
+  
+]
 
 const fetchAndTransformInterventions = async () => {
-  const pocsagSouthTyrolApiUrl = `https://pocsagsuedtirol.it/api/v1/ae?api_token=${process.env.POCSAG_SOUTH_TYROL_TOKEN}`
+  // const pocsagSouthTyrolApiUrl = `https://pocsagsuedtirol.it/api/v1/ae?api_token=${process.env.POCSAG_SOUTH_TYROL_TOKEN}`
 
   try {
-    const getInterventionsResponse = await fetch(pocsagSouthTyrolApiUrl)
-    const getInterventionsResult = await getInterventionsResponse.json()
+    // const getInterventionsResponse = await fetch(pocsagSouthTyrolApiUrl)
+    // const getInterventionsResult = await getInterventionsResponse.json()
 
-    if (!getInterventionsResponse.ok || getInterventionsResult.status !== StatusCodes.OK) {
-      return
-    }
+    // if (!getInterventionsResponse.ok || getInterventionsResult.status !== StatusCodes.OK) {
+    //   return
+    // }
 
-    interventions = getInterventionsResult.data.map((intervention) => ({
+    const pocsagInterventions = JSON.parse(await fs.readFile("./src/interventions.json", "utf-8"))
+
+    interventions = pocsagInterventions.map((intervention) => ({
       alarmLevel: intervention.ALARMSTUFE ? intervention.ALARMSTUFE : null,
       district: intervention.BEZIRK ? intervention.BEZIRK : null,
       date: intervention.DATUM ? dayjs(intervention.DATUM).utc().toISOString() : null,
@@ -35,7 +40,6 @@ const fetchAndTransformInterventions = async () => {
       loop: intervention.SCHLEIFE ? intervention.SCHLEIFE : null,
       keyword: intervention.STICHWORT ? intervention.STICHWORT : null,
       subkeyword: intervention.UNTERSTICHWORT ? intervention.UNTERSTICHWORT : null,
-
     }))
   } catch (error) {
     fastify.log.error(error)
